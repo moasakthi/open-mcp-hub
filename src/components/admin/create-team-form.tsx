@@ -43,7 +43,7 @@ export function CreateTeamForm() {
           onChange={(e) => setName(e.target.value)}
           required
         />
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
       <Button type="submit" disabled={submitting}>
         {submitting ? "Creating..." : "Create team"}

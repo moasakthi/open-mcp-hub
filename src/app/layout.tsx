@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fira_Code, Fira_Sans } from "next/font/google";
 import "./globals.css";
 import { auth } from "@/lib/auth";
-import { Nav } from "@/components/nav";
+import { AppShell } from "@/components/app-shell";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const firaSans = Fira_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const firaCode = Fira_Code({
+  variable: "--font-mono",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -23,13 +26,15 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
 
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-zinc-50 dark:bg-zinc-950">
-        {session?.user && <Nav userEmail={session.user.email} isAdmin={session.user.isAdmin} />}
-        <div className="flex flex-1 flex-col">{children}</div>
+    <html lang="en" className={`dark ${firaSans.variable} ${firaCode.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        <TooltipProvider>
+          {session?.user ? (
+            <AppShell user={{ email: session.user.email, isAdmin: session.user.isAdmin }}>{children}</AppShell>
+          ) : (
+            <div className="flex flex-1 flex-col">{children}</div>
+          )}
+        </TooltipProvider>
       </body>
     </html>
   );

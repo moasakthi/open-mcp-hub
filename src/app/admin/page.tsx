@@ -1,41 +1,42 @@
 import Link from "next/link";
+import { Users, ShieldCheck, History, type LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
+
+const SECTIONS: { href: string; title: string; description: string; icon: LucideIcon }[] = [
+  { href: "/admin/teams", title: "Teams", description: "Create teams and manage their members.", icon: Users },
+  {
+    href: "/admin/access",
+    title: "Access grants",
+    description: "Grant users or teams scoped access to specific servers or tools.",
+    icon: ShieldCheck,
+  },
+  {
+    href: "/admin/audit",
+    title: "Audit log",
+    description: "See who changed servers, teams, members, or access grants.",
+    icon: History,
+  },
+];
 
 export default function AdminPage() {
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Admin</h1>
+      <PageHeader title="Admin" description="Manage teams, scoped access, and the change history." />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Link href="/admin/teams">
-          <Card className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900">
-            <CardHeader>
-              <CardTitle className="text-base">Teams</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-zinc-600 dark:text-zinc-400">
-              Create teams and manage their members.
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/admin/access">
-          <Card className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900">
-            <CardHeader>
-              <CardTitle className="text-base">Access grants</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-zinc-600 dark:text-zinc-400">
-              Grant users or teams scoped access to specific servers or tools.
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/admin/audit">
-          <Card className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900">
-            <CardHeader>
-              <CardTitle className="text-base">Audit log</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-zinc-600 dark:text-zinc-400">
-              See who changed servers, teams, members, or access grants.
-            </CardContent>
-          </Card>
-        </Link>
+        {SECTIONS.map((section) => (
+          <Link key={section.href} href={section.href}>
+            <Card className="h-full transition-colors hover:bg-muted/40">
+              <CardHeader>
+                <div className="mb-1 flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30">
+                  <section.icon className="size-4.5" />
+                </div>
+                <CardTitle className="text-base">{section.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">{section.description}</CardContent>
+            </Card>
+          </Link>
+        ))}
       </div>
     </div>
   );

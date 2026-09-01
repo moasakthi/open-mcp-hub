@@ -34,9 +34,9 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ id:
         </CardHeader>
         <CardContent>
           {team.members.length === 0 ? (
-            <p className="text-sm text-zinc-500">No members yet.</p>
+            <p className="text-sm text-muted-foreground">No members yet.</p>
           ) : (
-            <ul className="divide-y text-sm">
+            <ul className="divide-y divide-border text-sm">
               {team.members.map((member) => (
                 <li key={member.id} className="flex items-center justify-between gap-4 py-2">
                   <div>

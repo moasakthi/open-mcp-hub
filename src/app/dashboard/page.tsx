@@ -1,83 +1,107 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getVisibleServerIds } from "@/lib/permissions";
+import { getVisibleServerIds, getVisibleToolWhere } from "@/lib/permissions";
+import { formatAuditMetadata } from "@/lib/audit-format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  ONLINE: "default",
-  OFFLINE: "secondary",
-  ERROR: "destructive",
-  UNKNOWN: "outline",
-};
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
+import { StatCards } from "@/components/stat-cards";
 
 export default async function DashboardPage() {
   const session = await auth();
   const actor = { id: session!.user.id, isAdmin: session!.user.isAdmin };
-  const visibleServerIds = await getVisibleServerIds(actor);
 
-  const servers = await db.mcpServer.findMany({
-    where: visibleServerIds === "all" ? {} : { id: { in: visibleServerIds } },
-    orderBy: { createdAt: "desc" },
-    include: { createdBy: { select: { email: true } }, _count: { select: { tools: true } } },
-  });
+  const visibleServerIds = await getVisibleServerIds(actor);
+  const serverWhere = visibleServerIds === "all" ? {} : { id: { in: visibleServerIds } };
+
+  const [servers, toolCount, recentAudit] = await Promise.all([
+    db.mcpServer.findMany({ where: serverWhere, orderBy: { createdAt: "desc" } }),
+    db.mcpTool.count({ where: await getVisibleToolWhere(actor) }),
+    actor.isAdmin
+      ? db.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 6, include: { actor: { select: { email: true } } } })
+      : Promise.resolve([]),
+  ]);
+
+  const onlineCount = servers.filter((s) => s.status === "ONLINE").length;
+  const errorServers = servers.filter((s) => s.status === "ERROR");
+
+  const stats = {
+    servers: servers.length,
+    tools: toolCount,
+    online: onlineCount,
+    needsAttention: errorServers.length,
+  };
 
   return (
     <div className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">MCP servers</h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Servers registered in the hub, with their transport and tool count.
-          </p>
-        </div>
-        <Button render={<Link href="/servers/new" />}>Add server</Button>
-      </div>
-
-      {servers.length === 0 ? (
-        <Card className="flex flex-col items-center gap-3 p-10 text-center text-sm text-zinc-600 dark:text-zinc-400">
-          <p>No MCP servers registered yet.</p>
-          <Button render={<Link href="/servers/new" />} size="sm">
-            Add your first server
+      <PageHeader
+        title="Overview"
+        description="What's registered in the hub and what's changed recently."
+        action={
+          <Button render={<Link href="/servers/new" />}>
+            <Plus /> Add server
           </Button>
+        }
+      />
+
+      <StatCards stats={stats} />
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Needs attention</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {errorServers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Every server synced cleanly last time. Nothing to do.</p>
+            ) : (
+              <ul className="divide-y divide-border text-sm">
+                {errorServers.map((server) => (
+                  <li key={server.id} className="flex items-center justify-between gap-4 py-2.5">
+                    <div>
+                      <Link href={`/servers/${server.id}`} className="font-medium hover:underline">
+                        {server.name}
+                      </Link>
+                      <p className="text-xs text-muted-foreground">Last sync failed</p>
+                    </div>
+                    <Badge variant="destructive">ERROR</Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
         </Card>
-      ) : (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-zinc-100 text-left text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900">
-              <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Transport</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Tools</th>
-                <th className="px-4 py-3 font-medium">Added by</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {servers.map((server) => (
-                <tr key={server.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                  <td className="px-4 py-3">
-                    <Link href={`/servers/${server.id}`} className="font-medium hover:underline">
-                      {server.name}
-                    </Link>
-                    {server.description && (
-                      <p className="text-xs text-zinc-500">{server.description}</p>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">{server.transport}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant={STATUS_VARIANT[server.status] ?? "outline"}>{server.status}</Badge>
-                  </td>
-                  <td className="px-4 py-3">{server._count.tools}</td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{server.createdBy.email}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+
+        {actor.isAdmin && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Recent activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentAudit.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No registry changes recorded yet.</p>
+              ) : (
+                <ul className="divide-y divide-border text-sm">
+                  {recentAudit.map((log) => (
+                    <li key={log.id} className="py-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge variant="outline">{log.action}</Badge>
+                        <span className="text-xs text-muted-foreground">{log.createdAt.toLocaleString()}</span>
+                      </div>
+                      <p className="mt-1 font-mono text-xs text-muted-foreground">
+                        {log.actor?.email ?? "system"} · {formatAuditMetadata(log.metadata)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

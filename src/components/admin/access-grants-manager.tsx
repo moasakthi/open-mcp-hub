@@ -171,14 +171,14 @@ export function AccessGrantsManager({
           {submitting ? "Granting..." : "Grant access"}
         </Button>
       </form>
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
       {grants.length === 0 ? (
-        <p className="text-sm text-zinc-500">No access grants yet — admins can see everything regardless.</p>
+        <p className="text-sm text-muted-foreground">No access grants yet — admins can see everything regardless.</p>
       ) : (
-        <div className="overflow-hidden rounded-lg border">
+        <div className="overflow-hidden rounded-xl border bg-card dark:backdrop-blur-xl">
           <table className="w-full text-sm">
-            <thead className="bg-zinc-100 text-left text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900">
+            <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Subject</th>
                 <th className="px-4 py-3 font-medium">Resource</th>
@@ -186,9 +186,9 @@ export function AccessGrantsManager({
                 <th className="px-4 py-3 font-medium" />
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-border">
               {grants.map((grant) => (
-                <tr key={grant.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                <tr key={grant.id} className="hover:bg-muted/40">
                   <td className="px-4 py-3">
                     {lookup.get(grant.subjectId) ?? grant.subjectId}
                     <Badge variant="outline" className="ml-2">
@@ -220,7 +220,7 @@ export function AccessGrantsManager({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs text-zinc-500">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
       {children}
     </div>
   );

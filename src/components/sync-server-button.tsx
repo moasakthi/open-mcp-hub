@@ -29,7 +29,7 @@ export function SyncServerButton({ serverId }: { serverId: string }) {
       <Button variant="outline" onClick={handleSync} disabled={syncing}>
         {syncing ? "Syncing..." : "Sync now"}
       </Button>
-      {error && <p className="max-w-xs text-right text-xs text-red-600">{error}</p>}
+      {error && <p className="max-w-xs text-right text-xs text-destructive">{error}</p>}
     </div>
   );
 }

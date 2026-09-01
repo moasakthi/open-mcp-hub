@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +19,7 @@ export type ToolCatalogItem = {
 export function ToolCatalog({ tools }: { tools: ToolCatalogItem[] }) {
   const [query, setQuery] = useState("");
   const [serverId, setServerId] = useState<string>("all");
+  const reduceMotion = useReducedMotion();
 
   const servers = useMemo(() => {
     const map = new Map<string, string>();
@@ -63,23 +65,33 @@ export function ToolCatalog({ tools }: { tools: ToolCatalogItem[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-zinc-500">No tools match.</p>
+        <p className="text-sm text-muted-foreground">No tools match.</p>
       ) : (
-        <div className="overflow-hidden rounded-lg border">
+        <div className="overflow-hidden rounded-xl border bg-card dark:backdrop-blur-xl">
           <table className="w-full text-sm">
-            <thead className="bg-zinc-100 text-left text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900">
+            <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Tool</th>
                 <th className="px-4 py-3 font-medium">Server</th>
                 <th className="px-4 py-3 font-medium">Parameters</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <motion.tbody
+              className="divide-y divide-border"
+              initial="hidden"
+              animate="show"
+              variants={{ show: { transition: { staggerChildren: reduceMotion ? 0 : 0.03 } } }}
+            >
               {filtered.map((tool) => (
-                <tr key={tool.id} className="align-top hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                <motion.tr
+                  key={tool.id}
+                  variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
+                  transition={{ duration: 0.2 }}
+                  className="align-top hover:bg-muted/40"
+                >
                   <td className="px-4 py-3">
                     <p className="font-medium">{tool.name}</p>
-                    {tool.description && <p className="text-xs text-zinc-500">{tool.description}</p>}
+                    {tool.description && <p className="text-xs text-muted-foreground">{tool.description}</p>}
                   </td>
                   <td className="px-4 py-3">
                     <Link href={`/servers/${tool.server.id}`} className="hover:underline">
@@ -89,10 +101,12 @@ export function ToolCatalog({ tools }: { tools: ToolCatalogItem[] }) {
                       {tool.server.transport}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-zinc-500">{summarizeInputSchema(tool.inputSchema)}</td>
-                </tr>
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                    {summarizeInputSchema(tool.inputSchema)}
+                  </td>
+                </motion.tr>
               ))}
-            </tbody>
+            </motion.tbody>
           </table>
         </div>
       )}

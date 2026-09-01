@@ -47,7 +47,7 @@ export function AddTeamMemberForm({ teamId }: { teamId: string }) {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
       <Select value={role} onValueChange={(value) => setRole(value as TeamRole)}>
         <SelectTrigger className="w-32">

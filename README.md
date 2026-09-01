@@ -12,6 +12,7 @@ A centralized portal for registering MCP (Model Context Protocol) servers and br
 - **Scoped access** — admins manage `Team`s and `AccessGrant`s (per-user or per-team, at `VIEW`/`USE`/`MANAGE` level, scoped to a specific server *or* a specific tool) under `/admin`. Non-admins only see what they created or were granted; a grant on one tool never exposes its sibling tools.
 - **Audit log** — `/admin/audit` records who created/edited/removed a server, team, member, or access grant (sync runs get their own per-server sync history instead).
 - **Scheduled re-sync** — `POST /api/cron/sync-all` re-syncs every registered server; meant to be hit by an external scheduler, not the browser (see below).
+- **Preloaded catalog** — `prisma/seed.ts` registers 12 well-known reference MCP servers (filesystem, GitHub, Slack, Postgres, Puppeteer, Brave Search, ...) on first run so the hub isn't empty. Most need real credentials in their env vars before they'll sync — edit them from the server detail page.
 
 > A registered STDIO server is an arbitrary local command the portal will spawn on sync — treat "who can register/edit a STDIO server" as "who can run code on this host" when handing out `MANAGE` grants.
 
@@ -21,7 +22,8 @@ A centralized portal for registering MCP (Model Context Protocol) servers and br
 - [Prisma](https://www.prisma.io) — SQLite for local dev, Postgres-ready for production (see `docker-compose.yml`)
 - [Auth.js](https://authjs.dev) (credentials login, RBAC via scoped `AccessGrant`s)
 - [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk) — connects to registered servers (stdio or Streamable HTTP) to introspect tools
-- Tailwind CSS + shadcn/ui
+- Tailwind CSS + shadcn/ui (Base UI), left-sidebar dashboard shell, dark-first "Modern Dark" theme (Fira Sans/Fira Code)
+- [framer-motion](https://www.framer.com/motion/) + a couple of [react-bits](https://reactbits.dev) components (`CountUp`, `Aurora`) for the dashboard's animated stats and the login screen's ambient background — both skipped automatically under `prefers-reduced-motion`
 
 ## Getting started
 

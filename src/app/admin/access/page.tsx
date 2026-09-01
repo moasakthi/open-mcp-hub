@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { AccessGrantsManager } from "@/components/admin/access-grants-manager";
+import { PageHeader } from "@/components/page-header";
 
 export default async function AccessGrantsPage() {
   const [grants, users, teams, servers, tools] = await Promise.all([
@@ -15,11 +16,10 @@ export default async function AccessGrantsPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
-      <h1 className="mb-1 text-2xl font-semibold tracking-tight">Access grants</h1>
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-        Grant a user or team scoped access to a specific server or tool. Admins can always see everything; server
-        creators can always manage their own servers.
-      </p>
+      <PageHeader
+        title="Access grants"
+        description="Grant a user or team scoped access to a specific server or tool. Admins can always see everything; server creators can always manage their own servers."
+      />
 
       <AccessGrantsManager
         grants={grants}

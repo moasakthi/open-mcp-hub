@@ -49,7 +49,7 @@ export default async function ServerDetailPage({ params }: { params: Promise<{ i
             <h1 className="text-2xl font-semibold tracking-tight">{dto.name}</h1>
             <Badge variant="outline">{dto.transport}</Badge>
           </div>
-          {dto.description && <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{dto.description}</p>}
+          {dto.description && <p className="mt-1 text-sm text-muted-foreground">{dto.description}</p>}
         </div>
         {canManage && (
           <div className="flex items-start gap-2">
@@ -92,7 +92,7 @@ export default async function ServerDetailPage({ params }: { params: Promise<{ i
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-zinc-500">Status</span>
+              <span className="text-muted-foreground">Status</span>
               <Badge variant={STATUS_VARIANT[dto.status] ?? "outline"}>{dto.status}</Badge>
             </div>
             <Field label="Added by" value={server.createdBy.email} />
@@ -108,16 +108,16 @@ export default async function ServerDetailPage({ params }: { params: Promise<{ i
         </CardHeader>
         <CardContent>
           {server.tools.length === 0 ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               No tools synced yet. Click &ldquo;Sync now&rdquo; to connect to this server and list its tools.
             </p>
           ) : (
-            <ul className="divide-y text-sm">
+            <ul className="divide-y divide-border text-sm">
               {server.tools.map((tool) => (
                 <li key={tool.id} className="py-2">
                   <p className="font-medium">{tool.name}</p>
-                  {tool.description && <p className="text-zinc-500">{tool.description}</p>}
-                  <p className="mt-1 font-mono text-xs text-zinc-400">{summarizeInputSchema(tool.inputSchema)}</p>
+                  {tool.description && <p className="text-muted-foreground">{tool.description}</p>}
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">{summarizeInputSchema(tool.inputSchema)}</p>
                 </li>
               ))}
             </ul>
@@ -131,7 +131,7 @@ export default async function ServerDetailPage({ params }: { params: Promise<{ i
             <CardTitle className="text-base">Sync history</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="divide-y text-sm">
+            <ul className="divide-y divide-border text-sm">
               {server.syncLogs.map((log) => (
                 <li key={log.id} className="flex items-start justify-between gap-4 py-2">
                   <div>
@@ -139,9 +139,9 @@ export default async function ServerDetailPage({ params }: { params: Promise<{ i
                       <Badge variant={log.status === "SUCCESS" ? "default" : log.status === "ERROR" ? "destructive" : "outline"}>
                         {log.status}
                       </Badge>
-                      <span className="text-zinc-500">{log.startedAt.toLocaleString()}</span>
+                      <span className="text-muted-foreground">{log.startedAt.toLocaleString()}</span>
                     </div>
-                    {log.error && <p className="mt-1 max-w-md text-xs text-red-600">{log.error}</p>}
+                    {log.error && <p className="mt-1 max-w-md text-xs text-destructive">{log.error}</p>}
                   </div>
                 </li>
               ))}
@@ -156,7 +156,7 @@ export default async function ServerDetailPage({ params }: { params: Promise<{ i
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4">
-      <span className="text-zinc-500">{label}</span>
+      <span className="text-muted-foreground">{label}</span>
       <span className="text-right font-mono text-xs">{value}</span>
     </div>
   );
