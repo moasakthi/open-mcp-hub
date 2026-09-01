@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Enum-like fields are stored as plain strings (validated in the TS layer)
+// rather than native Prisma enums, and JSON-shaped fields as encoded strings
+// rather than scalar lists/native json — both so this schema runs unmodified
+// on SQLite (local dev) and Postgres (production) with just a provider swap.
+// See TeamRole / ServerTransport / ServerStatus / SubjectType / ResourceType /
+// AccessLevel / SyncStatus in src/lib/types.ts for the allowed values.
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  isAdmin      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  teamMemberships TeamMember[]
+  createdServers  McpServer[]
+  auditLogs       AuditLog[]
+
+  @@map("users")
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  members TeamMember[]
+  servers McpServer[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id     String @id @default(cuid())
+  userId String
+  teamId String
+  role   String // TeamRole: "OWNER" | "MEMBER"
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@map("team_members")
+}
+
+model McpServer {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  transport   String // ServerTransport: "STDIO" | "HTTP"
+
+  // STDIO transport
+  command String?
+  args    String? // JSON-encoded string[]
+  env     String? // JSON-encoded Record<string, string>
+
+  // HTTP transport
+  url     String?
+  headers String? // JSON-encoded Record<string, string>
+
+  status      String   @default("UNKNOWN") // ServerStatus
+  ownerTeamId String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerTeam Team?     @relation(fields: [ownerTeamId], references: [id])
+  createdBy User      @relation(fields: [createdById], references: [id])
+  tools     McpTool[]
+  syncLogs  SyncLog[]
+
+  @@map("mcp_servers")
+}
+
+model McpTool {
+  id          String   @id @default(cuid())
+  serverId    String
+  name        String
+  description String?
+  inputSchema String // JSON-encoded JSON Schema
+  lastSeenAt  DateTime @default(now())
+
+  server McpServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@unique([serverId, name])
+  @@map("mcp_tools")
+}
+
+// Polymorphic grant: (subjectType, subjectId) is a User or Team id;
+// (resourceType, resourceId) is an McpServer or McpTool id. Not a real FK
+// since it spans two possible target tables on each side — enforced in the
+// application layer (see src/lib/permissions.ts, added in a later phase).
+model AccessGrant {
+  id           String   @id @default(cuid())
+  subjectType  String // SubjectType: "USER" | "TEAM"
+  subjectId    String
+  resourceType String // ResourceType: "SERVER" | "TOOL"
+  resourceId   String
+  level        String // AccessLevel: "VIEW" | "USE" | "MANAGE"
+  createdAt    DateTime @default(now())
+
+  @@unique([subjectType, subjectId, resourceType, resourceId])
+  @@map("access_grants")
+}
+
+// Records who changed the registry or access rules (not sync runs — those
+// have their own SyncLog). actorId is nullable so a future
+// non-interactive/system actor can log here too without a real user row.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String // e.g. "server.create", "accessGrant.revoke" — see src/lib/audit.ts
+  targetType String // AuditTargetType: "SERVER" | "TEAM" | "TEAM_MEMBER" | "ACCESS_GRANT"
+  targetId   String?
+  metadata   String? // JSON-encoded extra detail (e.g. { name: "..." })
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+model SyncLog {
+  id         String    @id @default(cuid())
+  serverId   String
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  status     String // SyncStatus: "RUNNING" | "SUCCESS" | "ERROR"
+  error      String?
+
+  server McpServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@map("sync_logs")
+}
